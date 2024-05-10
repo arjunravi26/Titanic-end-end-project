@@ -19,10 +19,10 @@ def get_requirements(file_path: str) -> List[str]:
 
 
 setup(
-    name="your_project_name",
+    name="titanic_prediction",
     version="0.0.1",
-    author="your_name",
-    author_email="your_email",
+    author="Arjun",
+    author_email="arjunravi1523@gmail.com",
     packages=find_packages(),
     install_requires=get_requirements("requirements.txt"),
 )
