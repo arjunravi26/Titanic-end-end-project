@@ -61,9 +61,3 @@ class DataIngestion:
         except Exception as e:
             logging.info(f"Error during data ingestion {e}")
             raise CustomException(e, sys)
-
-
-if __name__ == "__main__":
-    obj = DataIngestion()
-    train_data_path, test_data_path = obj.data_ingestion()
-    print(train_data_path, test_data_path)
