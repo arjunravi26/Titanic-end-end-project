@@ -1,0 +1,13 @@
+prefix=/home/arjun/Documents/titan_ml/myvenv
+exec_prefix=/home/arjun/Documents/titan_ml/myvenv
+libdir=/home/arjun/Documents/titan_ml/myvenv/lib
+sharedlibdir=/home/arjun/Documents/titan_ml/myvenv/lib
+includedir=/home/arjun/Documents/titan_ml/myvenv/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.13
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}
