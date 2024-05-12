@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+from data_load import DataIngestionConfig
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
