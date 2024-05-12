@@ -15,6 +15,8 @@ from typing import Tuple
 from src.utils import save_object
 
 # this class have the path for storing preprocessor pipeline pickle file
+
+
 @dataclass
 class DataTransformerConfig:
     preprocessor_obj_path: str = os.path.join("artifacts", "pipeline.pkl")
@@ -108,7 +110,7 @@ class DataTransformation:
         # save preprocessor pipeline object
         save_object(self.preprocessor_path, self.pipeline)
 
-    def preprocess_data(self) -> Tuple[np.ndarray, pd.Series]:
+    def preprocess_train_data(self) -> Tuple[np.ndarray, pd.Series]:
         # all above proprocessing functions are in order
         try:
             logging.info('Feature engineering started')
@@ -127,8 +129,24 @@ class DataTransformation:
             logging.info('Data preprocessing finished')
             return self.processed_feature, self.label
         except Exception as e:
-            logging.info(f'Error Occured {e,sys}')
-            raise CustomException(e, sys)
+            logging.info(f'Error Occured {e,sys.exc_info()[0]}')
+            raise CustomException(e, sys.exc_info()[0])
+
+    def preprocess_test_data(self):
+        try:
+            logging.info('Feature engineering started')
+            self.feature_engineering()
+            logging.info('Feature selection started')
+            self.feature_selection()
+            logging.info('Data splitting started')
+            self.split_data()
+            logging.info('Data transformation started')
+            self.processed_feature = self.pipeline.transform(self.feature)
+            logging.info('Data preprocessing finished')
+            return self.processed_feature, self.label
+        except Exception as e:
+            logging.info(f'Error Occured {e,sys.exc_info()[0]}')
+            raise CustomException(e, sys.exc_info()[0])
 
 
 if __name__ == "__main__":
