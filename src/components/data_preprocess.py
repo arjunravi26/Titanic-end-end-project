@@ -146,26 +146,3 @@ class DataTransformation:
         self.load_preprocessor = load(self.preprocessor_path)
         self.pred_data = self.load_preprocessor.transform(self.feature)
         return self.pred_data
-
-
-
-
-
-
-        
-# if __name__ == "__main__":
-#     try:
-#         path_obj: DataIngestionConfig = DataIngestionConfig()
-#         df_train: pd.DataFrame = pd.read_csv(path_obj.train_path)
-#         obj: DataTransformation = DataTransformation(df_train)
-#         X_train, y_trian = obj.preprocess_train_data()
-#         df_test: pd.DataFrame = pd.read_csv(path_obj.test_path)
-#         obj: DataTransformation = DataTransformation(df_test)
-#         X_test, y_test = obj.preprocess_test_data()
-  
-#         logging.info("Completed")
-#     except Exception as e:
-#         logging.info(f"error occured {e}")
-#         raise CustomException(e, sys)
-
-
