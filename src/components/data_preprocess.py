@@ -3,8 +3,8 @@ import numpy as np
 import os
 import sys
 from data_load import DataIngestionConfig
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, PolynomialFeatures,StandardScaler
+from sklearn.feature_selection import SelectFromModel
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from src.logger import logging
 from src.exception import CustomException
 from typing import Tuple
+from xgboost import XGBClassifier
 from src.utils import save_object
 from joblib import load
 
@@ -49,26 +50,29 @@ class DataTransformation:
             self.df["Age"], bins=age_bins, labels=self.age_labels, right=False
         )
 
-        # child with parents
-        self.df["ChildWithParents"] = np.where(
-            (self.df["Age"] < 18) & (self.df["Parch"] > 0), 1, 0
-        )
+   
+        self.df["Family_size"] = self.df["Parch"] + self.df["SibSp"] + 1
+        family_map = {1: 'Alone', 2: 'Small', 3: 'Small', 4: 'Small',
+                    5: 'Medium', 6: 'Medium', 7: 'Large', 8: 'Large', 11: 'Large'}
+        self.df['Family_Group'] = self.df['Family_size'].map(family_map)
+
 
     def feature_selection(self) -> None:
         # Select the important features for prediction
         self.df.drop(
             columns=["PassengerId", "Name", "SibSp",
-                     "Parch", "Ticket", "Cabin"],
+                     "Parch", "Ticket", "Cabin",'Family_size','Age'],
             axis=1,
             inplace=True,
         )
+
 
     def create_pipeline(self) -> None:
         # for preprocessing raw data such as handle null value, encode and scale we create a pipeline here
 
         cat_cols_onehot: list = ["Sex"]
-        cat_cols_ordinal: list = ["Age_Group", "Embarked"]
-        nums_cols: list = ["Age", "Fare"]
+        cat_cols_ordinal: list = ["Age_Group",'Family_Group','Embarked']
+        nums_cols: list = ["Fare"]
 
         # pipeline for 'Sex' feature
         cat_onehot_pipeline: Pipeline = Pipeline(
@@ -77,15 +81,15 @@ class DataTransformation:
                 ("onehot_encode", OneHotEncoder(handle_unknown="ignore")),
             ]
         )
-        # pipeline for 'Age_Group' and 'Embarked'
+        # pipeline for 'Age_Group' and 'Family Group'
         cat_ordinal_pipeline: Pipeline = Pipeline(
             steps=[
                 ("imputer", SimpleImputer(strategy="most_frequent")),
                 ("ordinal_encoder", OrdinalEncoder(
-                    categories=[self.age_labels, ["S", "C", "Q"]])),
+                    categories=[self.age_labels, ['Alone', 'Small', 'Medium', 'Large'],['S','C','Q']])),
             ]
         )
-        # pipeline for 'Age' and 'Fare'
+        # pipeline for 'Fare'
         nums_pipeline: Pipeline = Pipeline(
             steps=[
                 ("imputer", SimpleImputer(strategy="median")),
@@ -102,55 +106,66 @@ class DataTransformation:
         )
         # final pipeline is created using the ColumnTransfomer
         self.pipeline: Pipeline = Pipeline(steps=[("pipeline", preprocessor)])
-
-    def split_data(self) -> None:
-        # split data into features and labels
-        self.feature: pd.DataFrame = self.df.drop("Survived", axis=1)
-        self.label: pd.Series = self.df["Survived"]
+        self.train_data_pipeline = self.pipeline.fit_transform(self.feature)
 
 
-    def preprocess_train_data(self) -> Tuple[np.ndarray, pd.Series]:
-        # all above proprocessing functions are in order
-        try:
-            logging.info('Feature engineering started')
-            self.feature_engineering()
-            logging.info('Feature selection started')
-            self.feature_selection()
-            logging.info('Pipeline creation started')
-            self.create_pipeline()
-            logging.info('Data splitting started')
-            self.save_preproecssor()
-            logging.info(
-                f'Preprocessor pipeline saved as {self.preprocessor_path}')
-            self.split_data()
-            logging.info('Data transformation started')
-            self.processed_feature = self.pipeline.fit_transform(self.feature)
-            logging.info('Data preprocessing finished')
-            self.save_preproecssor()
-            return self.processed_feature, self.label
-        except Exception as e:
-            logging.info(f'Error Occured {e,sys}')
-            raise CustomException(e, sys)
-    
+
     def save_preproecssor(self):
         # save preprocessor pipeline object
         save_object(self.preprocessor_path, self.pipeline)
+        
+        
+    def split_data(self) -> None:
+        # split data into features and labels
+        self.feature: pd.DataFrame = self.df.drop("Survived", axis=1)
+        self.label: pd.Series = self.df["Survived"]    
+        
+        
+    # for preprocessing training data
+    def preprocess_train_data(self):
+        self.feature_engineering()
+        self.feature_selection()
+        self.split_data()
+        self.create_pipeline()
+        self.save_preproecssor()
+        return self.train_data_pipeline,self.label
+    
+    # for preprocessing test data
+    def preprocess_test_data(self):
+        self.feature_engineering()
+        self.feature_selection()
+        self.split_data()
+        self.load_preprocessor = load(self.preprocessor_path)
+        self.test_data = self.load_preprocessor.transform(self.feature)
+        return self.test_data,self.label
+    
+    # for preprocessing new data data
+    def preprocess_pred_data(self):
+        self.feature_engineering()
+        self.feature_selection()
+        self.load_preprocessor = load(self.preprocessor_path)
+        self.pred_data = self.load_preprocessor.transform(self.feature)
+        return self.pred_data
 
-    def preprocess_test_data(self)->Tuple[np.ndarray, pd.Series]:
-        try:
-            logging.info('Feature engineering started')
-            self.feature_engineering()
-            logging.info('Feature selection started')
-            self.feature_selection()
-            logging.info('Data splitting started')
-            self.split_data()
-            logging.info('Data transformation started')
-            self.pipeline = load(self.preprocessor_path)
-            self.processed_feature = self.pipeline.transform(self.feature)
-            logging.info('Data preprocessing finished')
-            return self.processed_feature, self.label
-        except Exception as e:
-            logging.info(f'Error Occured {e,sys}')
-            raise CustomException(e, sys)
+
+
+
+
+
+        
+# if __name__ == "__main__":
+#     try:
+#         path_obj: DataIngestionConfig = DataIngestionConfig()
+#         df_train: pd.DataFrame = pd.read_csv(path_obj.train_path)
+#         obj: DataTransformation = DataTransformation(df_train)
+#         X_train, y_trian = obj.preprocess_train_data()
+#         df_test: pd.DataFrame = pd.read_csv(path_obj.test_path)
+#         obj: DataTransformation = DataTransformation(df_test)
+#         X_test, y_test = obj.preprocess_test_data()
+  
+#         logging.info("Completed")
+#     except Exception as e:
+#         logging.info(f"error occured {e}")
+#         raise CustomException(e, sys)
 
 

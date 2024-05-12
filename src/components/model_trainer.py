@@ -11,12 +11,13 @@ from data_load import DataIngestionConfig, DataIngestion
 from data_preprocess import DataTransformerConfig, DataTransformation
 from src.logger import logging
 from src.exception import CustomException
-from sklearn.model_selection import RandomizedSearchCV,GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from scipy.stats import randint
-
 # Classification metrics
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+from src.utils import save_object
+
 
 
 class ModelConfig:
@@ -43,7 +44,7 @@ class Model:
             "XGBClassifier": XGBClassifier()
         }
 
-    def model_train(self):
+    def train(self):
         for key, model in self.model_map.items():
             print(f"fitting {key,model} model")
             model.fit(self.X, self.y)
@@ -79,24 +80,27 @@ class Model:
     "AdaboostClassifier": {"n_estimators": list(range(50, 100)), "learning_rate": [0.01, 0.1, 1]},
     "SVC": {"C": [0.1, 1, 10, 100], "gamma": [1, 0.1, 0.01, 0.001]},
     "XGBClassifier": {"n_estimators": list(range(50, 100)), "learning_rate": [0.01, 0.1, 1]}
-        }
+}
+
 
     # Perform randomized search for each model
         for model_name, model in self.model_map.items():
-            print(f"Performing randomized search for {model_name}...")
-            random_search = GridSearchCV(model, param_grid[model_name], cv=5)
-            random_search.fit(self.X, self.y)
-            self.model_map[model_name] = random_search
-            print(f"Best parameters for {model_name}: {random_search.best_params_}")
+            print(f"Performing Grid search for {model_name}...")
+            grid_search = GridSearchCV(model, param_grid[model_name], cv=5)
+            grid_search.fit(self.X, self.y)
+            self.model_map[model_name] = grid_search
+            print(f"Best parameters for {model_name}: {grid_search.best_params_}")
         logging.info('Evaluation after hyperparameter tuning started')
         self.model_eval()
+    def save_model(self):
+        save_object(self.model_path,self.model_map['XGBClassifier'])
     def model_trainer(self):
         try:
             logging.info('Model training started')
             self.define_model()
             logging.info('Model defined')
             logging.info('Model training started')
-            self.model_train()
+            self.train()
             logging.info('Model prediction started')
             self.model_predict()
             logging.info('Model evaluation started')
@@ -109,18 +113,22 @@ class Model:
             raise CustomException(e,sys)
 
 
-# if __name__ == "__main__":
-#     try:
-#         path_obj: DataIngestionConfig = DataIngestionConfig()
-#         df_train: pd.DataFrame = pd.read_csv(path_obj.train_path)
-#         obj: DataTransformation = DataTransformation(df_train)
-#         X_train, y_trian = obj.preprocess_train_data()
-#         df_test: pd.DataFrame = pd.read_csv(path_obj.test_path)
-#         obj: DataTransformation = DataTransformation(df_test)
-#         X_test, y_test = obj.preprocess_test_data()
-#         model_obj = Model(X=X_train, y=y_trian,test_X=X_test,test_y=y_test)
-#         model_obj.model_trainer()
-#         logging.info("Completed")
-#     except Exception as e:
-#         logging.info(f"error occured {e}")
-#         raise CustomException(e, sys)
+if __name__ == "__main__":
+    try:
+        path_obj: DataIngestionConfig = DataIngestionConfig()
+        df_train: pd.DataFrame = pd.read_csv(path_obj.train_path)
+        obj: DataTransformation = DataTransformation(df_train)
+        X_train, y_train = obj.preprocess_train_data()
+
+        
+        df_test: pd.DataFrame = pd.read_csv(path_obj.test_path)
+        obj: DataTransformation = DataTransformation(df_test)
+        X_test, y_test = obj.preprocess_test_data()
+
+       
+        model_obj = Model(X=X_train, y=y_train,test_X=X_test,test_y=y_test)
+        model_obj.model_trainer()
+        logging.info("Completed")
+    except Exception as e:
+        logging.info(f"error occured {e}")
+        raise CustomException(e, sys)
