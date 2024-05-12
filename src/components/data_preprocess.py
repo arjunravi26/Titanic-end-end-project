@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-from data_load import DataIngestionConfig
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
@@ -13,6 +12,8 @@ from src.logger import logging
 from src.exception import CustomException
 from typing import Tuple
 from src.utils import save_object
+from joblib import load
+
 
 # this class have the path for storing preprocessor pipeline pickle file
 
@@ -106,9 +107,6 @@ class DataTransformation:
         self.feature: pd.DataFrame = self.df.drop("Survived", axis=1)
         self.label: pd.Series = self.df["Survived"]
 
-    def save_preproecssor(self):
-        # save preprocessor pipeline object
-        save_object(self.preprocessor_path, self.pipeline)
 
     def preprocess_train_data(self) -> Tuple[np.ndarray, pd.Series]:
         # all above proprocessing functions are in order
@@ -127,12 +125,17 @@ class DataTransformation:
             logging.info('Data transformation started')
             self.processed_feature = self.pipeline.fit_transform(self.feature)
             logging.info('Data preprocessing finished')
+            self.save_preproecssor()
             return self.processed_feature, self.label
         except Exception as e:
-            logging.info(f'Error Occured {e,sys.exc_info()[0]}')
-            raise CustomException(e, sys.exc_info()[0])
+            logging.info(f'Error Occured {e,sys}')
+            raise CustomException(e, sys)
+    
+    def save_preproecssor(self):
+        # save preprocessor pipeline object
+        save_object(self.preprocessor_path, self.pipeline)
 
-    def preprocess_test_data(self):
+    def preprocess_test_data(self)->Tuple[np.ndarray, pd.Series]:
         try:
             logging.info('Feature engineering started')
             self.feature_engineering()
@@ -141,21 +144,12 @@ class DataTransformation:
             logging.info('Data splitting started')
             self.split_data()
             logging.info('Data transformation started')
+            self.pipeline = load(self.preprocessor_path)
             self.processed_feature = self.pipeline.transform(self.feature)
             logging.info('Data preprocessing finished')
             return self.processed_feature, self.label
         except Exception as e:
-            logging.info(f'Error Occured {e,sys.exc_info()[0]}')
-            raise CustomException(e, sys.exc_info()[0])
+            logging.info(f'Error Occured {e,sys}')
+            raise CustomException(e, sys)
 
 
-if __name__ == "__main__":
-    try:
-        path_obj: DataIngestionConfig = DataIngestionConfig()
-        df: pd.DataFrame = pd.read_csv(path_obj.train_path)
-        obj: DataTransformation = DataTransformation(df)
-        X, y = obj.preprocess_data()
-        logging.info('Completed')
-    except Exception as e:
-        logging.info(f'error occured {e}')
-        raise CustomException(e, sys)
