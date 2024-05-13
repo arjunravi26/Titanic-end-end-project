@@ -1,10 +1,6 @@
 import pandas as pd
-import numpy as np
 import os
-import sys
-from data_load import DataIngestionConfig
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, PolynomialFeatures,StandardScaler
-from sklearn.feature_selection import SelectFromModel
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder,StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -12,7 +8,6 @@ from dataclasses import dataclass
 from src.logger import logging
 from src.exception import CustomException
 from typing import Tuple
-from xgboost import XGBClassifier
 from src.utils import save_object
 from joblib import load
 
@@ -41,7 +36,7 @@ class DataTransformation:
         # new features are extracted from teh existing ones.
         # age group
         age_bins: list = [
-            self.df["Age"].min(), 5, 13, 18, 30, 40, 56, self.df["Age"].max() + 1,
+            0, 5, 13, 18, 30, 40, 56, 120,
         ]
         self.age_labels: list = [
             "Baby", "Child", "Teenager", "Young Adult", "Adult", "Middle-Aged", "Senior",
@@ -144,5 +139,5 @@ class DataTransformation:
         self.feature_engineering()
         self.feature_selection()
         self.load_preprocessor = load(self.preprocessor_path)
-        self.pred_data = self.load_preprocessor.transform(self.feature)
+        self.pred_data = self.load_preprocessor.transform(self.df)
         return self.pred_data

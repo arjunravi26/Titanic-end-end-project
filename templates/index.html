@@ -1,11 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ML Project</title>
+    <title>Titanic Survival Prediction</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
+
 <body>
-    <h1>Welcome to the Ml Project</h1>
+    <div class="container">
+        <h1 class="text-center my-4">Titanic Survival Prediction</h1>
+
+        <form  action="{{ url_for('predict')}}" method="post">
+            <label for="passengerId">Passenger ID</label>
+            <input type="text" id="passengerId" name="passengerId">
+
+            <label for="pclass">Pclass</label>
+            <select id="pclass" name="pclass">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name">
+
+            <label for="sex">Sex</label>
+            <select id="sex" name="sex">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+            <label for="age">Age</label>
+            <input type="text" id="age" name="age">
+            <label for="sibSp">SibSp</label>
+            <input type="text" id="sibSp" name="sibSp">
+
+            <label for="parch">Parch</label>
+            <input type="text" id="parch" name="parch">
+
+            <label for="ticket">Ticket</label>
+            <input type="text" id="ticket" name="ticket">
+            <label for="fare">Fare</label>
+            <input type="text" id="fare" name="fare">
+            <label for="cabin">Cabin</label>
+            <input type="text" id="cabin" name="cabin">
+
+            <label for="embarked">Embarked</label>
+            <select id="embarked" name="embarked">
+                <option value="S">S</option>
+                <option value="C">C</option>
+                <option value="Q">Q</option>
+            </select>
+
+            <input type="submit" value="Predict">
+        </form>
+    </div>
+    <div id="result" class="mt-4"></div>
+
 </body>
+
 </html>

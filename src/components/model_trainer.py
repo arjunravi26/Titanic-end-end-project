@@ -1,18 +1,14 @@
 import os
 import sys
-import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
-from data_load import DataIngestionConfig, DataIngestion
-from data_preprocess import DataTransformerConfig, DataTransformation
 from src.logger import logging
 from src.exception import CustomException
 from sklearn.model_selection import GridSearchCV
-from scipy.stats import randint
 # Classification metrics
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
@@ -96,39 +92,15 @@ class Model:
         save_object(self.model_path,self.model_map['XGBClassifier'])
     def model_trainer(self):
         try:
-            logging.info('Model training started')
             self.define_model()
-            logging.info('Model defined')
-            logging.info('Model training started')
             self.train()
-            logging.info('Model prediction started')
             self.model_predict()
-            logging.info('Model evaluation started')
             self.model_eval()
-            logging.info('Hyperparameter tuning started')
             self.hyperparameter_tuning()
-            logging.info('Hyperparameter tuning completed')
+            self.save_model()
         except Exception as e:
             logging.info(f'Error occured {e}')
             raise CustomException(e,sys)
 
 
-if __name__ == "__main__":
-    try:
-        path_obj: DataIngestionConfig = DataIngestionConfig()
-        df_train: pd.DataFrame = pd.read_csv(path_obj.train_path)
-        obj: DataTransformation = DataTransformation(df_train)
-        X_train, y_train = obj.preprocess_train_data()
 
-        
-        df_test: pd.DataFrame = pd.read_csv(path_obj.test_path)
-        obj: DataTransformation = DataTransformation(df_test)
-        X_test, y_test = obj.preprocess_test_data()
-
-       
-        model_obj = Model(X=X_train, y=y_train,test_X=X_test,test_y=y_test)
-        model_obj.model_trainer()
-        logging.info("Completed")
-    except Exception as e:
-        logging.info(f"error occured {e}")
-        raise CustomException(e, sys)
