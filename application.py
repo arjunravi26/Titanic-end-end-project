@@ -3,15 +3,15 @@ import pandas as pd
 from src.pipeline.pred_pipeline import PredPipeline
 from src.exception import CustomException
 import sys
-app = Flask(__name__)
+application = Flask(__name__)
 
 
 # Creating route for index page
-@app.route("/")
+@application.route("/")
 def index():
     return render_template("index.html")
 
-@app.route('/predict', methods=['POST','GET'])
+@application.route('/predict', methods=['POST','GET'])
 def predict():
     try:
         print('here')
@@ -51,5 +51,5 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    application.run(debug=True)
         
