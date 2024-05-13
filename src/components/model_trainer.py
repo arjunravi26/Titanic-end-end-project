@@ -3,9 +3,8 @@ import sys
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier,GradientBoostingClassifier
 from sklearn.svm import SVC
-from xgboost import XGBClassifier
 from src.logger import logging
 from src.exception import CustomException
 from sklearn.model_selection import GridSearchCV
@@ -37,7 +36,7 @@ class Model:
             "RandomForest": RandomForestClassifier(),
             "AdaboostClassifier": AdaBoostClassifier(),
             "SVC": SVC(),
-            "XGBClassifier": XGBClassifier()
+            "GradientBoostingClassifier":GradientBoostingClassifier()
         }
 
     def train(self):
@@ -75,7 +74,8 @@ class Model:
     "RandomForest": {"n_estimators": list(range(10, 100)), "max_depth": list(range(1, 10))},
     "AdaboostClassifier": {"n_estimators": list(range(50, 100)), "learning_rate": [0.01, 0.1, 1]},
     "SVC": {"C": [0.1, 1, 10, 100], "gamma": [1, 0.1, 0.01, 0.001]},
-    "XGBClassifier": {"n_estimators": list(range(50, 100)), "learning_rate": [0.01, 0.1, 1]}
+    "XGBClassifier": {"n_estimators": list(range(50, 100)), "learning_rate": [0.01, 0.1, 1]},
+    "GradientBoostingClassifier": {'n_estimators': [100, 200, 300],'learning_rate': [0.01, 0.1, 1],'max_depth': [3, 4, 5]}
 }
 
 
@@ -89,7 +89,9 @@ class Model:
         logging.info('Evaluation after hyperparameter tuning started')
         self.model_eval()
     def save_model(self):
-        save_object(self.model_path,self.model_map['XGBClassifier'])
+        name = input('Enter name of the model to save')
+        logging.inof(f'{name},{self.model_map[name]} model saved in path {self.model_path}')
+        save_object(self.model_path,self.model_map[name])
     def model_trainer(self):
         try:
             self.define_model()
